@@ -20,8 +20,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['REMEMBER_COOKIE_SECURE'] = True
-app.config['REMEMBER_COOKIE_HTTPONLY'] = True
 
 # Get frontend URL from environment variable
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:8000')
@@ -33,7 +31,6 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-login_manager.session_protection = "strong"
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -106,7 +103,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
-            login_user(user, remember=True)
+            login_user(user)
             return jsonify({
                 'message': 'Login successful',
                 'user': {
@@ -251,4 +248,4 @@ def delete_student(student_id):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port)
