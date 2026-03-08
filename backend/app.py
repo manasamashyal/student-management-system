@@ -18,7 +18,10 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-super-secret-key-c
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///database.db').replace('postgres://', 'postgresql://')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = True  # Set to True in production
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['REMEMBER_COOKIE_SECURE'] = True
+app.config['REMEMBER_COOKIE_HTTPONLY'] = True
 
 # Get frontend URL from environment variable
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:8000')
@@ -30,6 +33,7 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+login_manager.session_protection = "strong"
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -76,7 +80,7 @@ def register():
             return jsonify({'error': 'Email already exists'}), 400
         
         # Create new user
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        hashed_password = generate_password_hash(password)
         new_user = User(username=username, email=email, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
@@ -102,7 +106,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
-            login_user(user)
+            login_user(user, remember=True)
             return jsonify({
                 'message': 'Login successful',
                 'user': {
